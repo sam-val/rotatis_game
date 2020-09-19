@@ -30,13 +30,12 @@ RECORDS_PATH = "./.records.pickle"
 CLOCK_POS_X = SCREEN_WIDTH - 1
 CLOCK_POS_Y = 0.5
 
-turn_commands = ['left', 'right', 'horizontal', 'vertical']
 
 # settings
 Settings = namedtuple('Settings', 'shapes_num moves_num time_reward')
-normal = Settings(shapes_num=3, moves_num=3, time_reward=8)
-easy = Settings(shapes_num=1, moves_num=3, time_reward=30)
-hard = Settings(shapes_num=4, moves_num=4, time_reward=5)
+normal = Settings(shapes_num=1, moves_num=3, time_reward=20)
+easy = Settings(shapes_num=1, moves_num=2, time_reward=30)
+hard = Settings(shapes_num=2, moves_num=4, time_reward=10)
 
 Score = namedtuple("Score", "name difficulty level time_spent time_stamp")
 
@@ -186,7 +185,8 @@ def turnRandom(settings):
     global result_board_array
     commands = []
     for _ in range(settings['current_moves_num']):
-        command = random.choice(turn_commands)
+    # for _ in range(12):
+        command = random.choice(list(turn_commands.keys()))
         # command = 'vertical'
         commands.append(command)
         move(command=command)
@@ -235,7 +235,7 @@ def time_added_animation():
             time_added_ani_start = True
             return
     # animation loop:
-    display_ob.display_textSur(CUBE_WIDTH * CLOCK_POS_X, CUBE_WIDTH * 0.7, text_sur=text_sur)
+    display_ob.display_sur(CUBE_WIDTH * CLOCK_POS_X, CUBE_WIDTH * 0.7, sur=text_sur)
 
 def fade_text(state, alpha, start_time, start,staying_still_time,text, x , y,
               colour=ORANGE, centeredY = False, centeredX=False,
@@ -263,7 +263,7 @@ def fade_text(state, alpha, start_time, start,staying_still_time,text, x , y,
             globals()[start] = True
             return
     # animation loop:
-    display_ob.display_textSur(x, y, text_sur=text_sur,centeredX=centeredX,centeredY=centeredY)
+    display_ob.display_sur(x, y, sur=text_sur, centeredX=centeredX, centeredY=centeredY)
 
 def exit_game(*args, **kwargs):
     global running
@@ -358,7 +358,9 @@ def count_down_clock(*args, **kwargs):
 
 def set_puzzle(settings):
     makeRandomShape(settings)
-    turnRandom(settings)
+    commands = turnRandom(settings)
+    ## update commands:
+    move_ob.moves = commands
 
 
 def reset_game():
@@ -411,6 +413,8 @@ def finish(lose = True):
 
     def set_records():
         name = text_field.get()
+        if name.strip() == "":
+            return
         score = Score(name=name, difficulty=difficulty,
                       level=current_level,
                       time_spent=total_elapse, time_stamp=datetime.now())
@@ -442,6 +446,7 @@ def set_settings():
     global currentSettings
     global current_level
     global remaining_time
+    global difficulty
     level = current_level
     if level == 0:
         currentSettings['current_shapes_num'] = DIFFICULTY_SETTINGS[difficulty].shapes_num
@@ -556,11 +561,36 @@ class Side(Board):
         game_state_text = "START" if paused else "PAUSE"
 
 class MyDisplay(Display):
+    RED_TIME = 30
     def my_display_clock(self, x, y, secs=0, colour = None, font=None, bg = None, centeredX = False, centeredY=False):
-        if secs < 20:
+        if secs < self.RED_TIME:
             colour = RED
         self.display_clock(x,y,secs=secs,colour=colour,font=font,bg=bg,centeredX=centeredX,centeredY=centeredY)
 
+class Moves():
+    GAP = 15
+    ## there are 4 moves: L, R, H, V
+    def __init__(self, moves, img_width):
+        self.moves = moves
+        self.img_width = img_width
+
+    def draw(self, x, y):
+        global field
+        if self.moves != None:
+            width = int(abs(field.posx-x) / (self.img_width + self.GAP))
+            for index,move in enumerate(self.moves):
+                img = turn_commands[move]
+                new_y = y
+                new_x = x + index*(self.img_width+self.GAP)
+                if index > width-1:
+                    new_y = y + ((index // width) * (self.img_width + self.GAP))
+                    index = index % width
+                    new_x = x + index * (self.img_width + self.GAP)
+                display_ob.display_sur(x=new_x, y=new_y, sur=img, centeredX=False, centeredY=False)
+
+
+    def set_image(self, move, img_str):
+        self.moves[move] = pygame.image.load(img_str).convert_alpha()
 
 # game initilization
 pygame.mixer.pre_init()
@@ -629,6 +659,17 @@ paused = True
 font_colour = BLACK
 result_board_array = []
 
+## set up images:
+root_folder = Path().parent.resolve()
+image_folder = root_folder / "images"
+
+test_img = pygame.image.load(str(image_folder / "35x35.png")).convert_alpha()
+left_img = pygame.image.load(str(image_folder / "Left.png")).convert_alpha()
+right_img = pygame.image.load(str(image_folder / "Right.png")).convert_alpha()
+horizontal_img = pygame.image.load(str(image_folder / "Horizontal.png")).convert_alpha()
+vertical_img = pygame.image.load(str(image_folder / "Vertical.png")).convert_alpha()
+turn_commands = {'left':left_img, 'right':right_img, 'horizontal':horizontal_img, 'vertical':vertical_img}
+
 ## user chooses difficulty
 difficulty = 'easy'
 
@@ -694,7 +735,8 @@ swear_x, swear_y = 0,0
 swear_text = ""
 
 remaining_time = PLAYTER_TIME
-# remaining_time = 5
+# remaining_time = 60
+
 start_time = 0 # for the count down clock
 total_start_time = 0 # for calculating total time
 elapse = 0
@@ -703,7 +745,7 @@ start_game = True
 
 # non-game objects:
 display_ob = MyDisplay(surface=scr, font=font, colour=font_colour)
-
+move_ob = Moves(None, img_width=test_img.get_width())
 # GAME LOOP:
 while running:
     # timing:
@@ -734,7 +776,8 @@ while running:
     # updating the fields
     side.update()
     count_down_clock()
-    click_text = "CLICK ME TO CHECK!"
+    click_text = "CLICK ME TO CHECK (or ENT" \
+                 "ER)!"
     click_colour = WHITE
     if not paused:
         button.change_colour(CLICK_BUTTON_COLOUR)
@@ -777,15 +820,16 @@ while running:
     if current_level == 4:
         display_ob.display_text(x=CUBE_WIDTH*1.1, y=CUBE_WIDTH*0.15, text=''.join([' ' for x in level]) + 'S',
                                 centeredY=False,centeredX=False, colour=YELLOW, font=clock_font_bold)
-
-    # display_ob.display_text(CUBE_WIDTH * 3, CUBE_WIDTH * 1, text=display, centeredX=False)
+    ### display the clock
     display_ob.my_display_clock(CUBE_WIDTH * CLOCK_POS_X, CUBE_WIDTH * CLOCK_POS_Y,
                                 secs=remaining_time, centeredX=True, centeredY=True,
                                 font=clock_font)
-
-
+    ### display the click text:
     display_ob.display_text(x=CUBE_WIDTH * (SCREEN_WIDTH/2), y=CUBE_WIDTH * 1.5, text=click_text, centeredY=True, centeredX=True,
                             colour=click_colour)
+    ### drawing the moves:
+    move_ob.draw(x=side_field.w*side_field.cube_w+move_ob.GAP,y=side_field.posy)
+
     ## draw affects:
     if time_adding:
         reward = currentSettings['current_time_reward']

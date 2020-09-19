@@ -120,7 +120,7 @@ class Display:
         text_sur = font.render(text, False, colour,bg)
         text_rect = text_sur.get_rect()
 
-        self.display_textSur(x,y,text_sur=text_sur,centeredY=centeredY,centeredX=centeredX)
+        self.display_sur(x, y, sur=text_sur, centeredY=centeredY, centeredX=centeredX)
         # self.surface.blit(text_sur,(x, y))
 
     def display_clock(self, x, y, secs=0, colour = None, font=None, bg = None, centeredX = False, centeredY=False):
@@ -141,17 +141,17 @@ class Display:
         return time
 
 
-    def display_textSur(self, x,y, text_sur, centeredX = False, centeredY = False):
-        text_rect = text_sur.get_rect()
-        text_w = text_sur.get_width()
-        text_h = text_sur.get_height()
+    def display_sur(self, x, y, sur, centeredX = False, centeredY = False):
+        text_rect = sur.get_rect()
+        text_w = sur.get_width()
+        text_h = sur.get_height()
 
         if centeredX:
             x = x - text_w//2
         if centeredY:
             y = y - text_h//2
 
-        self.surface.blit(text_sur,(x, y))
+        self.surface.blit(sur, (x, y))
 
 
 
