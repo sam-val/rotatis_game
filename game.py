@@ -10,7 +10,6 @@ from tkinter import ttk
 import pickle
 from pathlib import Path
 from datetime import datetime
-from screeninfo import get_monitors
 import os
 
 # GLOBAL/SETTING VARIABLES:
@@ -131,30 +130,6 @@ def checkBoard(*args, **kwargs):
 
 
 def compareShapes(b1,b2):
-    # def findFirstElem(list):
-    #     x = None
-    #     for i, ob in enumerate(list):
-    #         if ob.click == True:
-    #             x = i
-    #             break
-    #     return x
-    #
-    # b1_first = findFirstElem(b1)
-    # # print(b1_first)
-    # b2_first = findFirstElem(b2)
-    # # print(b2_first)
-    # if b1_first == None or b2_first == None:
-    #     return False
-    #
-    # first_list = b1[b1_first:]
-    # second_list = b2[b2_first:]
-    #
-    #
-    # for x,y in zip(first_list, second_list):
-    #     pair = x.click,y.click
-    #     if pair != (True, True) and pair != (False, False):l
-    #         return False
-    # return True
     if (len(b1) != len(b2)):
         return False
 
@@ -388,8 +363,6 @@ def confirmBox(title,content):
     rs = mb.askokcancel(title, content)
     root.destroy()
     return rs
-    # label = tkinter.Label(root, text="Are you sure?")
-    # label.place(anchor='n', relheight=1, relwidth=1)
 
 def record_player(root,record):
     global records
@@ -408,7 +381,6 @@ def finish(lose = True):
     global current_level
     global total_elapse
     global difficulty
-
     def set_records():
         name = text_field.get()
         if name.strip() == "":
@@ -541,7 +513,7 @@ def display_high_scores(*args, **kwargs):
 def goToChooseDifficulty():
     global onChooseDifficulty
     global scr
-    diff = ''
+    diff = None
     def diff_wrapper(dif):
         def choose_diff(*args, **kwargs):
             nonlocal diff
@@ -575,6 +547,9 @@ def goToChooseDifficulty():
         # listening for clicks:
         events = pygame.event.get()
         for e in events:
+            if e.type == pygame.QUIT:
+                if exit_game():
+                    running = False
             if e.type == pygame.MOUSEBUTTONDOWN:
                 easy_button.click(e.pos)
                 normal_button.click(e.pos)
@@ -601,19 +576,6 @@ def goToChooseDifficulty():
     del easy_button, normal_button, hard_button
     onChooseDifficulty = False
     return diff
-
-    # print("1. Easy\n2. Normal\n3. `Hard")
-    # while True:
-    #     try:
-    #         difficulty = int(input("Please choose difficulty level: ").strip())
-    #         if difficulty in [1,2,3]:
-    #             for i,k in enumerate(DIFFICULTY_SETTINGS.keys(), start=1):
-    #                 if i == difficulty:
-    #                     return k
-    #         else:
-    #             raise ValueError
-    #     except ValueError:
-    #         print("Invalid Input!")
 
 
 #classes:
@@ -667,10 +629,16 @@ class Moves():
     def set_image(self, move, img_str):
         self.moves[move] = pygame.image.load(img_str).convert_alpha()
 
+# RUN A TK LOOP BEFORE PYGAME TO AVOID CRASHING IN SOME MAC-SYSTEMS:
+hidden_tk = tkinter.Tk()
+# hidden_tk.protocol("WM_DELETE_WINDOW", check_tk_exit)
+hidden_tk.withdraw()
+hidden_tk.after(50, lambda : hidden_tk.destroy())
+hidden_tk.mainloop()
 
 # game initilization
-win_posx = get_monitors()[0].width//2 - CUBE_WIDTH*SCREEN_WIDTH//2
-win_posy = get_monitors()[0].height//2 - int(CUBE_WIDTH*SCREEN_HEIGHT//1.8)
+win_posx = 500
+win_posy = 100
 os.environ['SDL_VIDEO_WINDOW_POS'] = '%d,%d' % (win_posx,win_posy)
 pygame.mixer.pre_init()
 pygame.init()
@@ -731,6 +699,7 @@ side.array[4].colour = BLUE
 side.array[5].colour = INDIGO
 side.array[5].func = [exit_game]
 
+
 # in-game variables:
 running = True
 paused = True
@@ -768,9 +737,10 @@ difficulty = goToChooseDifficulty()
 
 # current stuff
 current_level = 0
-currentSettings = { 'shapes_num' :DIFFICULTY_SETTINGS[difficulty].shapes_num,
-                 'moves_num': DIFFICULTY_SETTINGS[difficulty].moves_num,
-                 'time_reward' : DIFFICULTY_SETTINGS[difficulty].time_reward}
+if difficulty is not None:
+    currentSettings = { 'shapes_num' :DIFFICULTY_SETTINGS[difficulty].shapes_num,
+                     'moves_num': DIFFICULTY_SETTINGS[difficulty].moves_num,
+                     'time_reward' : DIFFICULTY_SETTINGS[difficulty].time_reward}
 
 # import stuff from files:
 records = []
@@ -830,8 +800,6 @@ total_start_time = 0 # for calculating total time
 elapse = 0
 total_elapse = 0
 start_game = True
-
-
 
 
 # GAME LOOP:
