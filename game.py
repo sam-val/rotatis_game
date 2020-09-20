@@ -1,5 +1,4 @@
 from libs import Board, MyRect, Display
-import pprint
 import pygame
 import copy
 import random
@@ -11,6 +10,8 @@ from tkinter import ttk
 import pickle
 from pathlib import Path
 from datetime import datetime
+from screeninfo import get_monitors
+import os
 
 # GLOBAL/SETTING VARIABLES:
 BOARD_W = 6
@@ -339,9 +340,6 @@ def print_board(board):
     print("")
 
 
-
-
-
 def count_down_clock(*args, **kwargs):
     global remaining_time
     global start_time
@@ -505,7 +503,7 @@ def display_high_scores(*args, **kwargs):
 
     root = tkinter.Tk()
     root.title("High Scores")
-    h_title = tkinter.Label(root, text='Top 10 High Scores')
+    h_title = tkinter.Label(root, text=f'Top 10 High Scores for {difficulty.capitalize()} Difficulty')
 
     # create columns and table:
     cols = ('No.', 'Name', 'Difficult', 'Level', 'Time Spent', 'Time Stamp')
@@ -539,6 +537,83 @@ def display_high_scores(*args, **kwargs):
 
     root.resizable(False, False)
     root.mainloop()
+
+def goToChooseDifficulty():
+    global onChooseDifficulty
+    global scr
+    diff = ''
+    def diff_wrapper(dif):
+        def choose_diff(*args, **kwargs):
+            nonlocal diff
+            nonlocal running
+            diff = dif
+
+            running = False
+
+        return choose_diff
+
+
+    choose_label = "PLEASE CHOOSE DIFFICULTY: "
+    easy_rect_func = diff_wrapper('easy')
+    easy_rect = MyRect(colour=GREEN, line_colour=WHITE, func=[easy_rect_func])
+    normal_rect_func = diff_wrapper('normal')
+    normal_rect = MyRect(colour=BLUE, line_colour=WHITE, func=[normal_rect_func])
+    hard_rect_func = diff_wrapper('hard')
+    hard_rect = MyRect(colour=BRIGHT_RED, line_colour=WHITE, func=[hard_rect_func])
+    easy_button = Field(scr, x = CUBE_WIDTH*(SCREEN_WIDTH/2 - 2), y = CUBE_WIDTH*2,
+                   width = 4, height= 1, rect=easy_rect, cube_width=CUBE_WIDTH, cube_height=CUBE_WIDTH, border=False,
+                        line=False)
+    normal_button = Field(scr, x = CUBE_WIDTH*(SCREEN_WIDTH/2 - 2), y = CUBE_WIDTH*3.5,
+                        width = 4, height= 1, rect=normal_rect, cube_width=CUBE_WIDTH, cube_height=CUBE_WIDTH, border=False,
+                        line=False)
+    hard_button = Field(scr, x = CUBE_WIDTH*(SCREEN_WIDTH/2 - 2), y = CUBE_WIDTH*5,
+                          width = 4, height= 1, rect=hard_rect, cube_width=CUBE_WIDTH, cube_height=CUBE_WIDTH, border=False,
+                          line=False)
+    running = True
+    font = pygame.font.SysFont(my_font, size=35, bold=False)
+    while running:
+        # listening for clicks:
+        events = pygame.event.get()
+        for e in events:
+            if e.type == pygame.MOUSEBUTTONDOWN:
+                easy_button.click(e.pos)
+                normal_button.click(e.pos)
+                hard_button.click(e.pos)
+
+        display_ob.display_text(x=CUBE_WIDTH*(SCREEN_WIDTH/2),y= CUBE_WIDTH*1.5,
+                                text=choose_label, centeredY=True, centeredX=True,
+                                colour=WHITE)
+        easy_button.draw_plain_init()
+        normal_button.draw_plain_init()
+        hard_button.draw_plain_init()
+
+        display_ob.display_text(x=CUBE_WIDTH*(SCREEN_WIDTH/2),y=easy_button.posy+CUBE_WIDTH*0.5,
+                                font=font,
+                                text='EASY', colour=BLACK,centeredX=True,centeredY=True)
+        display_ob.display_text(x=CUBE_WIDTH*(SCREEN_WIDTH/2),y=normal_button.posy+CUBE_WIDTH*0.5,
+                                font=font,
+                                text='NORMAL', colour=BLACK,centeredX=True,centeredY=True)
+        display_ob.display_text(x=CUBE_WIDTH*(SCREEN_WIDTH/2),y=hard_button.posy+CUBE_WIDTH*0.5,
+                                font=font,
+                                text='HARD', colour=BLACK,centeredX=True,centeredY=True)
+        pygame.display.flip()
+
+    del easy_button, normal_button, hard_button
+    onChooseDifficulty = False
+    return diff
+
+    # print("1. Easy\n2. Normal\n3. `Hard")
+    # while True:
+    #     try:
+    #         difficulty = int(input("Please choose difficulty level: ").strip())
+    #         if difficulty in [1,2,3]:
+    #             for i,k in enumerate(DIFFICULTY_SETTINGS.keys(), start=1):
+    #                 if i == difficulty:
+    #                     return k
+    #         else:
+    #             raise ValueError
+    #     except ValueError:
+    #         print("Invalid Input!")
 
 
 #classes:
@@ -592,10 +667,15 @@ class Moves():
     def set_image(self, move, img_str):
         self.moves[move] = pygame.image.load(img_str).convert_alpha()
 
+
 # game initilization
+win_posx = get_monitors()[0].width//2 - CUBE_WIDTH*SCREEN_WIDTH//2
+win_posy = get_monitors()[0].height//2 - int(CUBE_WIDTH*SCREEN_HEIGHT//1.8)
+os.environ['SDL_VIDEO_WINDOW_POS'] = '%d,%d' % (win_posx,win_posy)
 pygame.mixer.pre_init()
 pygame.init()
 scr = pygame.display.set_mode((SCREEN_WIDTH*CUBE_WIDTH, SCREEN_HEIGHT*CUBE_WIDTH))
+
 
 pygame.display.set_caption(TITLE)
 scr.fill(BLACK)
@@ -615,13 +695,11 @@ side = Side(scr, x=0, y=CUBE_WIDTH * (SCREEN_HEIGHT-MENU_H),
             width=1, height=BOARD_H, cube_width=CUBE_WIDTH * 3, cube_height=CUBE_WIDTH,rect= side_rect)
 
 
+## CLICK RECTANGLE:
 button_rect = MyRect(colour=CLICK_BUTTON_COLOUR, line_colour=WHITE, func=[checkBoard])
-button = Field(scr, x = 0, y = CUBE_WIDTH*1,
-               width = SCREEN_WIDTH, height= 1, rect=button_rect, cube_width=CUBE_WIDTH, cube_height=CUBE_WIDTH, border=False, line=None)
+check_button = Field(scr, x = 0, y =CUBE_WIDTH * 1,
+                     width = SCREEN_WIDTH, height= 1, rect=button_rect, cube_width=CUBE_WIDTH, cube_height=CUBE_WIDTH, border=False, line=None)
 
-# button2_rect = MyRect(colour=BLUE, line_colour=WHITE, func=[makeRandomShape])
-# button2 = Field(scr, x = CUBE_WIDTH*7, y = CUBE_WIDTH,
-#                width = 1, height= 1, rect=button2_rect, cube_width=CUBE_WIDTH, cube_height=CUBE_WIDTH, border=False)
 
 side_field_rect = MyRect(border_colour=BLACK, colour=DARK_GREY, line_colour=WHITE, click_colour=ORANGE, func= None)
 side_field = Field(scr, x=0, y=CUBE_WIDTH*(SCREEN_HEIGHT-MENU_H+1),
@@ -670,8 +748,23 @@ horizontal_img = pygame.image.load(str(image_folder / "Horizontal.png")).convert
 vertical_img = pygame.image.load(str(image_folder / "Vertical.png")).convert_alpha()
 turn_commands = {'left':left_img, 'right':right_img, 'horizontal':horizontal_img, 'vertical':vertical_img}
 
-## user chooses difficulty
-difficulty = 'easy'
+### fonts and stuff:
+my_font = 'ubuntu'
+font = pygame.font.SysFont(my_font, size = 25, bold=True)
+time_added_font = pygame.font.SysFont(my_font, size=40, bold=True)
+clock_font = pygame.font.SysFont(my_font, size=60, bold=False)
+clock_font_bold = pygame.font.SysFont(my_font, size=60, bold=True)
+menu_font = pygame.font.SysFont("dejavusansmono", size=25, bold=False)
+compare_font = pygame.font.SysFont(my_font, size=40, bold=True)
+swear_font = pygame.font.SysFont(my_font, size=25, bold=True)
+
+# non-game objects:
+display_ob = MyDisplay(surface=scr, font=font, colour=font_colour)
+move_ob = Moves(None, img_width=test_img.get_width())
+
+### PROGRAM STARTS, GO TO FIRST SCREEN:
+onChooseDifficulty = True
+difficulty = goToChooseDifficulty()
 
 # current stuff
 current_level = 0
@@ -683,9 +776,12 @@ currentSettings = { 'shapes_num' :DIFFICULTY_SETTINGS[difficulty].shapes_num,
 records = []
 if Path(RECORDS_PATH).resolve().exists():
     with open(RECORDS_PATH, "rb") as score_data:
-        records = pickle.load(score_data)
-
-
+        try:
+            d = pickle.load(score_data)
+            if d is not None:
+                records = d
+        except EOFError as e:
+            print(e)
 
 with open("text/insults_adjectives.txt", 'r') as file:
     adjs = file.readlines()
@@ -697,14 +793,6 @@ with open("text/insults_nouns.txt", 'r') as file1:
 adjs_cleaned = [insult.replace('\n', '') if ('\n' in insult) else insult for insult in adjs ]
 nouns_cleaned = [insult.replace('\n', '') if ('\n' in insult) else insult for insult in nouns ]
 
-my_font = 'ubuntu'
-font = pygame.font.SysFont(my_font, size = 25, bold=True)
-time_added_font = pygame.font.SysFont(my_font, size=40, bold=True)
-clock_font = pygame.font.SysFont(my_font, size=60, bold=False)
-clock_font_bold = pygame.font.SysFont(my_font, size=60, bold=True)
-menu_font = pygame.font.SysFont("dejavusansmono", size=25, bold=False)
-compare_font = pygame.font.SysFont(my_font, size=40, bold=True)
-swear_font = pygame.font.SysFont(my_font, size=25, bold=True)
 
 # text variables:
 display = ""
@@ -743,25 +831,38 @@ elapse = 0
 total_elapse = 0
 start_game = True
 
-# non-game objects:
-display_ob = MyDisplay(surface=scr, font=font, colour=font_colour)
-move_ob = Moves(None, img_width=test_img.get_width())
+
+
+
 # GAME LOOP:
 while running:
     # timing:
     clock.tick(FRAME_RATE)
 
     # input & update the game:
+    enter_key_press = 0
+    enter_key_limit = 1
     events = pygame.event.get()
     for e in events:
         if e.type == pygame.QUIT:
             exit_game()
+
+        if e.type == pygame.KEYDOWN:
+            if enter_key_press < enter_key_limit:
+                if e.key == pygame.K_RETURN:
+                    checkBoard()
+                    enter_key_press = 0
+
+            if e.key == pygame.K_p:
+                pause_game()
+
+
         # mouse clicks:
         if e.type == pygame.MOUSEBUTTONDOWN:
             side.click(e.pos)
             if not paused:
                 field.click(e.pos)
-                button.click(e.pos)
+                check_button.click(e.pos)
 
         #### check current levels and adjusting things accordingly:
     if remaining_time <= 0:
@@ -780,7 +881,7 @@ while running:
                  "ER)!"
     click_colour = WHITE
     if not paused:
-        button.change_colour(CLICK_BUTTON_COLOUR)
+        check_button.change_colour(CLICK_BUTTON_COLOUR)
         if start_game:
             set_puzzle(currentSettings)
             start_game = False
@@ -792,7 +893,7 @@ while running:
     else:
         click_colour = GREEN
         click_text = "click start to play"
-        button.change_colour(BLACK)
+        check_button.change_colour(BLACK)
 
         total_start_time = time.time() - total_elapse
 
@@ -804,7 +905,7 @@ while running:
         ## draw buttons and fields:
     side.draw_plain_init()
     field.draw_plain_init()
-    button.draw_plain_init()
+    check_button.draw_plain_init()
     side_field.draw_plain_init()
 
         ## draw menu text:
@@ -854,9 +955,4 @@ while running:
     pygame.display.flip()
 
 pygame.quit()
-
-
-
-
-
 
