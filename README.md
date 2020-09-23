@@ -6,6 +6,7 @@ a pygame 2.0.0 (and above) version must be install, run:
 
 
 ---HOW TO INSTALL---
+
 0. Install Python3.7 (or above)
 1. Install the required modules using pip, run this at the root folder:
 > pip3 install -r requirements.txt
