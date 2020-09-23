@@ -2,3 +2,4 @@
 testing.py
 __pycache__
 venv
+.records.pickle

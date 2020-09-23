@@ -71,12 +71,11 @@ def checkBoard(*args, **kwargs):
     global remaining_time
     global display
     global swear
-    global  result_board_array
+    global result_board_array
     global compare_text_start
     global swear_start
     global swear_text
     global difficulty
-    global current_time_reward
     global currentSettings
     if result_board_array == []:
         print("result board is empty")
@@ -181,37 +180,6 @@ def chooseRandomElement(n, l, result_l):
         else:
             chooseRandomElement(n, l, result_l)
             return
-
-def time_added_animation():
-    global time_added_ani_alpha
-    global time_added_ani_start_time
-    global time_added_ani_start
-    global current_time_reward
-    if time_added_ani_start:
-        time_added_ani_start_time = time.time()
-        time_added_ani_start = False
-
-    reward = current_time_reward
-    text = "+" + str(reward)
-    original_sur = font.render(text, True, ORANGE)
-    text_sur = original_sur.copy()
-    alpha_sur = pygame.Surface(text_sur.get_size(), pygame.SRCALPHA)
-    fading_speed = 4
-    t2 = time.time()
-    if t2 - time_added_ani_start_time > 1:
-        if time_added_ani_alpha > 0:
-            time_added_ani_alpha = max(time_added_ani_alpha - fading_speed, 0)
-            text_sur = original_sur.copy()
-            alpha_sur.fill((255, 255, 255, time_added_ani_alpha))
-            text_sur.blit(alpha_sur, (0,0), special_flags=pygame.BLEND_RGBA_MULT)
-        else:
-            global time_adding
-            time_adding = False
-            time_added_ani_alpha = 255
-            time_added_ani_start = True
-            return
-    # animation loop:
-    display_ob.display_sur(CUBE_WIDTH * CLOCK_POS_X, CUBE_WIDTH * 0.7, sur=text_sur)
 
 def fade_text(state, alpha, start_time, start,staying_still_time,text, x , y,
               colour=ORANGE, centeredY = False, centeredX=False,
@@ -397,11 +365,11 @@ def finish(lose = True):
         label = tkinter.Label(root, text= f"You Lost!\nLevel: {current_level}\n"
                                           f"Total time spent: {time_spent}\nEnter your name here:")
     else:
+        current_level = 5
         root.title = "YOU WON!!"
         label = tkinter.Label(root, text="You Won!\nTotal time spent:  " + display_ob.convert(
     int(total_elapse)) + "\nEnter your name here:")
     text_field = tkinter.Entry(root)
-
 
     # label.place(anchor='n',relheight=1, relwidth=1)
     button = tkinter.Button(root, text='ok', command = set_records)
@@ -409,8 +377,19 @@ def finish(lose = True):
     text_field.grid(row=1,column=0)
     button.grid(row=1, column=1)
 
+    center_tk_window(root)
     root.mainloop()
     reset_game()
+
+def center_tk_window(root):
+    root.update()
+    w = root.winfo_width()
+    h = root.winfo_height()
+    screen_width = root.winfo_screenwidth()
+    screen_height= root.winfo_screenheight()
+    x,y = (screen_width//2 - w//2, screen_height//2 - h//2)
+    root.geometry("{}x{}+{}+{}".format(w,h,x,y))
+
 
 def set_settings():
     global currentSettings
@@ -422,7 +401,7 @@ def set_settings():
         currentSettings['current_shapes_num'] = DIFFICULTY_SETTINGS[difficulty].shapes_num
         currentSettings['current_moves_num'] = DIFFICULTY_SETTINGS[difficulty].moves_num
         currentSettings['current_time_reward'] = DIFFICULTY_SETTINGS[difficulty].time_reward
-    elif level >= 4:
+    elif level == 4:
         currentSettings['current_moves_num'] = DIFFICULTY_SETTINGS[difficulty].moves_num + 3
         currentSettings['current_shapes_num'] = DIFFICULTY_SETTINGS[difficulty].moves_num + 3
     elif level == 3:
@@ -435,6 +414,8 @@ def set_settings():
 
 def check_current_level(time):
     global current_level
+    # if time >= 60*6:
+    #     level = 5
     if time >= 60*5:
         level = 4
     elif time >= 60*4:
@@ -500,14 +481,17 @@ def display_high_scores(*args, **kwargs):
     for index, score in enumerate(cleaned_records,start=1):
         time_stamp = score.time_stamp.strftime("%Y/%m/%d -- %H:%M:%S")
         time_spent = display_ob.convert(score.time_spent)
+        level = score.level if score.level <= 3 else 'S' if score.level <= 4 else 'WON!'
         table.insert(parent="", index='end',
-                     values=(index, score.name.upper(), score.difficulty.upper(), score.level
+                     values=(index, score.name.upper(), score.difficulty.upper(), level
                              ,time_spent,time_stamp))
     h_title.grid(row=0, columnspan=5)
     table.grid(row=1, columnspan=1)
     exit_button.grid(row=2,columnspan=5)
 
     root.resizable(False, False)
+
+    center_tk_window(root)
     root.mainloop()
 
 def goToChooseDifficulty():
@@ -738,9 +722,9 @@ difficulty = goToChooseDifficulty()
 # current stuff
 current_level = 0
 if difficulty is not None:
-    currentSettings = { 'shapes_num' :DIFFICULTY_SETTINGS[difficulty].shapes_num,
-                     'moves_num': DIFFICULTY_SETTINGS[difficulty].moves_num,
-                     'time_reward' : DIFFICULTY_SETTINGS[difficulty].time_reward}
+    currentSettings = { 'current_shapes_num' :DIFFICULTY_SETTINGS[difficulty].shapes_num,
+                     'current_moves_num': DIFFICULTY_SETTINGS[difficulty].moves_num,
+                     'current_time_reward' : DIFFICULTY_SETTINGS[difficulty].time_reward}
 
 # import stuff from files:
 records = []
@@ -793,7 +777,7 @@ swear_x, swear_y = 0,0
 swear_text = ""
 
 remaining_time = PLAYTER_TIME
-# remaining_time = 60
+# remaining_time = 60*6 - 1
 
 start_time = 0 # for the count down clock
 total_start_time = 0 # for calculating total time
