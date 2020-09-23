@@ -160,9 +160,7 @@ def turnRandom(settings):
     global result_board_array
     commands = []
     for _ in range(settings['current_moves_num']):
-    # for _ in range(12):
         command = random.choice(list(turn_commands.keys()))
-        # command = 'vertical'
         commands.append(command)
         move(command=command)
 
