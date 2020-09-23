@@ -6,7 +6,9 @@ a pygame 2.0.0 (and above) version must be install, run:
 
 
 ---HOW TO PLAY---
-> Just run game.py
+> Install the required modules using pip:
+>> pip install -r requirements.txt
+> Run game.py
 
 
 --- THERE ARE FOUR WAYS IN WHICH THE COMPUTER CAN MOVE THE BOARD: ---
