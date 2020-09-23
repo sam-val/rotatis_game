@@ -5,10 +5,10 @@ a pygame 2.0.0 (and above) version must be install, run:
 ---GAMEPLAY: YOU ARE ASKED TO CALCULATE THE SHAPE OF THE RANDOM BOARD AFTER THE COMPUTER RANDOMLY SPINNING OR FLIPPING IT. THERE ARE **5 LEVELS**.
 
 
----HOW TO PLAY---
-> Install the required modules using pip:
->> pip install -r requirements.txt
-> Run game.py
+---HOW TO INSTALL---
+1. Install the required modules using pip:
+> pip3 install -r requirements.txt
+2. Run game.py
 
 
 --- THERE ARE FOUR WAYS IN WHICH THE COMPUTER CAN MOVE THE BOARD: ---
