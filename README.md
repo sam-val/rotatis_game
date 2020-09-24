@@ -16,7 +16,7 @@ a pygame 2.0.0 (and above) version must be install, run:
 --- THERE ARE FOUR WAYS IN WHICH THE COMPUTER CAN MOVE THE BOARD: ---
 
 
-![tutorial_img](./tutorial.png)
+![tutorial_img](images/tutorial.png)
 
 
 

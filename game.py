@@ -11,6 +11,9 @@ import pickle
 from pathlib import Path
 from datetime import datetime
 import os
+from PIL import Image, ImageTk
+
+
 
 # GLOBAL/SETTING VARIABLES:
 BOARD_W = 6
@@ -379,13 +382,13 @@ def finish(lose = True):
     root.mainloop()
     reset_game()
 
-def center_tk_window(root):
+def center_tk_window(root, offset_x =0, offset_y = 0):
     root.update()
     w = root.winfo_width()
     h = root.winfo_height()
     screen_width = root.winfo_screenwidth()
     screen_height= root.winfo_screenheight()
-    x,y = (screen_width//2 - w//2, screen_height//2 - h//2)
+    x,y = (screen_width//2 - w//2 + offset_x, screen_height//2 - h//2 + offset_y)
     root.geometry("{}x{}+{}+{}".format(w,h,x,y))
 
 
@@ -490,6 +493,20 @@ def display_high_scores(*args, **kwargs):
     root.resizable(False, False)
 
     center_tk_window(root)
+    root.mainloop()
+
+def display_help(*args, **kwargs):
+    def close():
+        root.destroy()
+    root = tkinter.Tk()
+    img = ImageTk.PhotoImage(Image.open(str(image_folder / "tutorial.png")))
+
+    label = tkinter.Label(root, image=img)
+    label.pack()
+
+    root.protocol("WM_DELETE_WINDOW", close)
+    root.resizable(False, False)
+    center_tk_window(root, offset_y=-300)
     root.mainloop()
 
 def goToChooseDifficulty():
@@ -676,6 +693,7 @@ side.array[3].func = [display_high_scores]
 
 ### help
 side.array[4].colour = BLUE
+side.array[4].func = [display_help]
 
 ### exit game
 side.array[5].colour = INDIGO
