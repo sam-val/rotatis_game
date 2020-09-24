@@ -1,4 +1,4 @@
-from libs import Board, MyRect, Display
+from libs import Board, MyRect, Display, FadeInEffect
 import pygame
 import copy
 import random
@@ -11,6 +11,7 @@ import pickle
 from pathlib import Path
 from datetime import datetime
 import os
+from PIL import Image, ImageTk
 
 # GLOBAL/SETTING VARIABLES:
 BOARD_W = 6
@@ -66,18 +67,14 @@ SIDE_SHAPE_COLOUR = ORANGE
 #functions:
 
 def checkBoard(*args, **kwargs):
-    global time_adding
-    global compare_text
+    global swear_fade_ob
     global remaining_time
     global display
-    global swear
-    global  result_board_array
-    global compare_text_start
-    global swear_start
-    global swear_text
+    global result_board_array
     global difficulty
-    global current_time_reward
     global currentSettings
+    global swear_fade_ob
+    global result_text_fade_ob
     if result_board_array == []:
         print("result board is empty")
         return
@@ -105,28 +102,27 @@ def checkBoard(*args, **kwargs):
         check_current_level(remaining_time) ## adjust current level
         set_settings() ## adjust settings
         set_puzzle(currentSettings)
-        time_adding = True
+        time_reward_fade_ob.on = True
         display = "correct"
-        if not compare_text:
-            compare_text = True
-        compare_text_start = True
+        if not result_text_fade_ob.on:
+            result_text_fade_ob.on = True
+        result_text_fade_ob.first_start = True
     else:
-        if not compare_text:
-            compare_text=True
-        compare_text_start = True
+        if not result_text_fade_ob.on:
+            result_text_fade_ob.on=True
+        result_text_fade_ob.first_start = True
         display = "WRONG!"
 
-        if not swear:
-            swear = True
-        swear_start = True
+        if not swear_fade_ob.on:
+            swear_fade_ob.on = True
+        swear_fade_ob.first_start = True
         swear_adj = random.choice(adjs_cleaned)
         swear_noun = random.choice(nouns_cleaned)
 
-        swear_text =  swear_adj + " " + swear_noun
-        swear_text = swear_text.capitalize() + "!!!"
-        global swear_x,swear_y
-        swear_x = random.randint(0, CUBE_WIDTH * (SCREEN_WIDTH-3))
-        swear_y = random.randint(0,CUBE_WIDTH * (SCREEN_HEIGHT-2))
+        swear_fade_ob.text = swear_adj + " " + swear_noun
+        swear_fade_ob.text = swear_fade_ob.text.capitalize() + "!!!"
+        swear_fade_ob.x  = random.randint(0, CUBE_WIDTH * (SCREEN_WIDTH-3))
+        swear_fade_ob.y = random.randint(0,CUBE_WIDTH * (SCREEN_HEIGHT-2))
 
 
 def compareShapes(b1,b2):
@@ -161,9 +157,7 @@ def turnRandom(settings):
     global result_board_array
     commands = []
     for _ in range(settings['current_moves_num']):
-    # for _ in range(12):
         command = random.choice(list(turn_commands.keys()))
-        # command = 'vertical'
         commands.append(command)
         move(command=command)
 
@@ -181,37 +175,6 @@ def chooseRandomElement(n, l, result_l):
         else:
             chooseRandomElement(n, l, result_l)
             return
-
-def time_added_animation():
-    global time_added_ani_alpha
-    global time_added_ani_start_time
-    global time_added_ani_start
-    global current_time_reward
-    if time_added_ani_start:
-        time_added_ani_start_time = time.time()
-        time_added_ani_start = False
-
-    reward = current_time_reward
-    text = "+" + str(reward)
-    original_sur = font.render(text, True, ORANGE)
-    text_sur = original_sur.copy()
-    alpha_sur = pygame.Surface(text_sur.get_size(), pygame.SRCALPHA)
-    fading_speed = 4
-    t2 = time.time()
-    if t2 - time_added_ani_start_time > 1:
-        if time_added_ani_alpha > 0:
-            time_added_ani_alpha = max(time_added_ani_alpha - fading_speed, 0)
-            text_sur = original_sur.copy()
-            alpha_sur.fill((255, 255, 255, time_added_ani_alpha))
-            text_sur.blit(alpha_sur, (0,0), special_flags=pygame.BLEND_RGBA_MULT)
-        else:
-            global time_adding
-            time_adding = False
-            time_added_ani_alpha = 255
-            time_added_ani_start = True
-            return
-    # animation loop:
-    display_ob.display_sur(CUBE_WIDTH * CLOCK_POS_X, CUBE_WIDTH * 0.7, sur=text_sur)
 
 def fade_text(state, alpha, start_time, start,staying_still_time,text, x , y,
               colour=ORANGE, centeredY = False, centeredX=False,
@@ -343,12 +306,18 @@ def reset_game():
     global side_field
     global field
     global current_level
+    global time_reward_fade_ob
+    global result_text_fade_ob
+    global swear_fade_ob
     remaining_time = PLAYTER_TIME
     display = ""
     current_level = 0
     set_settings()
     side_field.array = side_field.make_new_array()
     field.array = field.make_new_array()
+    time_reward_fade_ob = FadeInEffect(still_time=1, text_colour=ORANGE)
+    result_text_fade_ob = FadeInEffect(still_time=3)
+    swear_fade_ob = FadeInEffect(text_colour=CYAN, still_time=2)
     if not paused:
         pause_game()
 
@@ -397,11 +366,11 @@ def finish(lose = True):
         label = tkinter.Label(root, text= f"You Lost!\nLevel: {current_level}\n"
                                           f"Total time spent: {time_spent}\nEnter your name here:")
     else:
+        current_level = 5
         root.title = "YOU WON!!"
         label = tkinter.Label(root, text="You Won!\nTotal time spent:  " + display_ob.convert(
     int(total_elapse)) + "\nEnter your name here:")
     text_field = tkinter.Entry(root)
-
 
     # label.place(anchor='n',relheight=1, relwidth=1)
     button = tkinter.Button(root, text='ok', command = set_records)
@@ -409,8 +378,19 @@ def finish(lose = True):
     text_field.grid(row=1,column=0)
     button.grid(row=1, column=1)
 
+    center_tk_window(root)
     root.mainloop()
     reset_game()
+
+def center_tk_window(root, offset_x =0, offset_y = 0):
+    root.update()
+    w = root.winfo_width()
+    h = root.winfo_height()
+    screen_width = root.winfo_screenwidth()
+    screen_height= root.winfo_screenheight()
+    x,y = (screen_width//2 - w//2 + offset_x, screen_height//2 - h//2 + offset_y)
+    root.geometry("{}x{}+{}+{}".format(w,h,x,y))
+
 
 def set_settings():
     global currentSettings
@@ -422,7 +402,7 @@ def set_settings():
         currentSettings['current_shapes_num'] = DIFFICULTY_SETTINGS[difficulty].shapes_num
         currentSettings['current_moves_num'] = DIFFICULTY_SETTINGS[difficulty].moves_num
         currentSettings['current_time_reward'] = DIFFICULTY_SETTINGS[difficulty].time_reward
-    elif level >= 4:
+    elif level == 4:
         currentSettings['current_moves_num'] = DIFFICULTY_SETTINGS[difficulty].moves_num + 3
         currentSettings['current_shapes_num'] = DIFFICULTY_SETTINGS[difficulty].moves_num + 3
     elif level == 3:
@@ -435,6 +415,8 @@ def set_settings():
 
 def check_current_level(time):
     global current_level
+    # if time >= 60*6:
+    #     level = 5
     if time >= 60*5:
         level = 4
     elif time >= 60*4:
@@ -500,15 +482,34 @@ def display_high_scores(*args, **kwargs):
     for index, score in enumerate(cleaned_records,start=1):
         time_stamp = score.time_stamp.strftime("%Y/%m/%d -- %H:%M:%S")
         time_spent = display_ob.convert(score.time_spent)
+        level = score.level if score.level <= 3 else 'S' if score.level <= 4 else 'WON!'
         table.insert(parent="", index='end',
-                     values=(index, score.name.upper(), score.difficulty.upper(), score.level
+                     values=(index, score.name.upper(), score.difficulty.upper(), level
                              ,time_spent,time_stamp))
     h_title.grid(row=0, columnspan=5)
     table.grid(row=1, columnspan=1)
     exit_button.grid(row=2,columnspan=5)
 
     root.resizable(False, False)
+
+    center_tk_window(root)
     root.mainloop()
+
+def display_help(*args, **kwargs):
+    def close():
+        root.destroy()
+    root = tkinter.Tk()
+    img = ImageTk.PhotoImage(Image.open(str(image_folder / "tutorial.png")))
+
+    label = tkinter.Label(root, image=img)
+    label.pack()
+
+    root.protocol("WM_DELETE_WINDOW", close)
+    root.resizable(False, False)
+    center_tk_window(root, offset_y=-300)
+    root.bind("<Escape>", lambda x: close())
+    root.mainloop()
+
 
 def goToChooseDifficulty():
     global onChooseDifficulty
@@ -644,7 +645,6 @@ pygame.mixer.pre_init()
 pygame.init()
 scr = pygame.display.set_mode((SCREEN_WIDTH*CUBE_WIDTH, SCREEN_HEIGHT*CUBE_WIDTH))
 
-
 pygame.display.set_caption(TITLE)
 scr.fill(BLACK)
 pygame.display.flip()
@@ -694,6 +694,7 @@ side.array[3].func = [display_high_scores]
 
 ### help
 side.array[4].colour = BLUE
+side.array[4].func = [display_help]
 
 ### exit game
 side.array[5].colour = INDIGO
@@ -738,9 +739,9 @@ difficulty = goToChooseDifficulty()
 # current stuff
 current_level = 0
 if difficulty is not None:
-    currentSettings = { 'shapes_num' :DIFFICULTY_SETTINGS[difficulty].shapes_num,
-                     'moves_num': DIFFICULTY_SETTINGS[difficulty].moves_num,
-                     'time_reward' : DIFFICULTY_SETTINGS[difficulty].time_reward}
+    currentSettings = { 'current_shapes_num' :DIFFICULTY_SETTINGS[difficulty].shapes_num,
+                     'current_moves_num': DIFFICULTY_SETTINGS[difficulty].moves_num,
+                     'current_time_reward' : DIFFICULTY_SETTINGS[difficulty].time_reward}
 
 # import stuff from files:
 records = []
@@ -778,22 +779,12 @@ time_added_ani_start_time = 0
 time_added_ani_start = True
 time_added_ani_still_time = 1
 
-compare_text = False
-compare_text_start = True
-compare_text_alpha = 255
-compare_text_start_time = 0
-compare_text_still_time = 3
-
-swear = False
-swear_start = True
-swear_alpha = 255
-swear_start_time = 0
-swear_still_time = 2
-swear_x, swear_y = 0,0
-swear_text = ""
+time_reward_fade_ob = FadeInEffect(still_time=1, text_colour=ORANGE)
+result_text_fade_ob = FadeInEffect(still_time=3)
+swear_fade_ob = FadeInEffect(text_colour=CYAN, still_time=2)
 
 remaining_time = PLAYTER_TIME
-# remaining_time = 60
+# remaining_time = 60*6 - 1
 
 start_time = 0 # for the count down clock
 total_start_time = 0 # for calculating total time
@@ -900,25 +891,19 @@ while running:
     move_ob.draw(x=side_field.w*side_field.cube_w+move_ob.GAP,y=side_field.posy)
 
     ## draw affects:
-    if time_adding:
+    if time_reward_fade_ob.on:
         reward = currentSettings['current_time_reward']
         text = "+" + str(reward)
-        fade_text('time_adding', 'time_added_ani_alpha', 'time_added_ani_start_time',
-                  'time_added_ani_start', 'time_added_ani_still_time', text,
-                  x=CUBE_WIDTH*CLOCK_POS_X, y=CUBE_WIDTH*CLOCK_POS_Y*0.3,colour=ORANGE, font=time_added_font,centeredY=True,
-                  centeredX=True)
+        time_reward_fade_ob.update(font=time_added_font,fading_speed=4, text=text, colour =ORANGE)
+        display_ob.display_sur(x=CUBE_WIDTH*CLOCK_POS_X, y=CUBE_WIDTH*CLOCK_POS_Y*0.3, sur=time_reward_fade_ob.text_sur, centeredX=True, centeredY=True)
 
-    if compare_text:
+    if result_text_fade_ob.on:
         colour = GREEN if display != 'WRONG!' else RED
-        fade_text('compare_text', 'compare_text_alpha', 'compare_text_start_time',
-                  'compare_text_start','compare_text_still_time',display,
-                  x=CUBE_WIDTH*(SCREEN_WIDTH/2),y=CUBE_WIDTH*0.5,colour=colour, centeredX=True,centeredY=True, font=compare_font)
-    if swear:
-        fade_text('swear', 'swear_alpha', 'swear_start_time',
-                  'swear_start','swear_still_time',text=swear_text,
-                  x=swear_x,y=swear_y,colour=CYAN,font=swear_font,
-                  fading_speed= 6
-                  )
+        result_text_fade_ob.update(font=compare_font, colour = colour, fading_speed=4,text=display)
+        display_ob.display_sur(x=CUBE_WIDTH*(SCREEN_WIDTH/2), y=CUBE_WIDTH*0.5, sur=result_text_fade_ob.text_sur, centeredY=True,centeredX=True)
+    if swear_fade_ob.on:
+        swear_fade_ob.update(font=swear_font, fading_speed=6)
+        display_ob.display_sur(swear_fade_ob.x, swear_fade_ob.y, sur=swear_fade_ob.text_sur, centeredX=False, centeredY=False)
         ## executing drawing & rendering:
     pygame.display.flip()
 
