@@ -1,5 +1,6 @@
 import pygame as pg
 import copy
+import time
 from collections import namedtuple
 
 class MyRect:
@@ -153,5 +154,46 @@ class Display:
 
         self.surface.blit(sur, (x, y))
 
+class FadeInEffect:
+    def __init__(self,x=0,y=0,on = False,alpha =255,start_time = 0, first_start=True,still_time=1,text_colour=(0,0,0), text=""):
+        self.text_colour = text_colour
+        self.x= x
+        self.y = y
+        self.on = on
+        self.alpha = alpha
+        self.start_time = start_time
+        self.first_start = first_start
+        self.still_time = still_time
+        self.text = text
+
+    def update(self, colour = None,
+               font = None, fading_speed=4, text=None):
+        if font == None:
+            print('no font!')
+            return
+        if text != None:
+            self.text = text
+        if colour != None:
+            self.text_colour = colour
+        if self.first_start:
+            self.start_time = time.time()
+            self.first_start = False
+
+        original_sur = font.render(self.text, True, self.text_colour)
+        text_sur = original_sur.copy()
+        alpha_sur = pg.Surface(text_sur.get_size(), pg.SRCALPHA)
+        t2 = time.time()
+        if t2 - self.start_time > self.still_time:
+            if self.alpha > 0:
+                self.alpha = max(self.alpha - fading_speed, 0)
+                text_sur = original_sur.copy()
+                alpha_sur.fill((255, 255, 255, self.alpha))
+                text_sur.blit(alpha_sur, (0, 0), special_flags=pg.BLEND_RGBA_MULT)
+            else:
+                self.on = False
+                self.alpha = 255
+                self.first_start = True
+                return
+        self.text_sur = text_sur
 
 

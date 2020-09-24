@@ -1,4 +1,4 @@
-from libs import Board, MyRect, Display
+from libs import Board, MyRect, Display, FadeInEffect
 import pygame
 import copy
 import random
@@ -12,8 +12,6 @@ from pathlib import Path
 from datetime import datetime
 import os
 from PIL import Image, ImageTk
-
-
 
 # GLOBAL/SETTING VARIABLES:
 BOARD_W = 6
@@ -69,17 +67,14 @@ SIDE_SHAPE_COLOUR = ORANGE
 #functions:
 
 def checkBoard(*args, **kwargs):
-    global time_adding
-    global compare_text
+    global swear_fade_ob
     global remaining_time
     global display
-    global swear
     global result_board_array
-    global compare_text_start
-    global swear_start
-    global swear_text
     global difficulty
     global currentSettings
+    global swear_fade_ob
+    global result_text_fade_ob
     if result_board_array == []:
         print("result board is empty")
         return
@@ -107,28 +102,27 @@ def checkBoard(*args, **kwargs):
         check_current_level(remaining_time) ## adjust current level
         set_settings() ## adjust settings
         set_puzzle(currentSettings)
-        time_adding = True
+        time_reward_fade_ob.on = True
         display = "correct"
-        if not compare_text:
-            compare_text = True
-        compare_text_start = True
+        if not result_text_fade_ob.on:
+            result_text_fade_ob.on = True
+        result_text_fade_ob.first_start = True
     else:
-        if not compare_text:
-            compare_text=True
-        compare_text_start = True
+        if not result_text_fade_ob.on:
+            result_text_fade_ob.on=True
+        result_text_fade_ob.first_start = True
         display = "WRONG!"
 
-        if not swear:
-            swear = True
-        swear_start = True
+        if not swear_fade_ob.on:
+            swear_fade_ob.on = True
+        swear_fade_ob.first_start = True
         swear_adj = random.choice(adjs_cleaned)
         swear_noun = random.choice(nouns_cleaned)
 
-        swear_text =  swear_adj + " " + swear_noun
-        swear_text = swear_text.capitalize() + "!!!"
-        global swear_x,swear_y
-        swear_x = random.randint(0, CUBE_WIDTH * (SCREEN_WIDTH-3))
-        swear_y = random.randint(0,CUBE_WIDTH * (SCREEN_HEIGHT-2))
+        swear_fade_ob.text = swear_adj + " " + swear_noun
+        swear_fade_ob.text = swear_fade_ob.text.capitalize() + "!!!"
+        swear_fade_ob.x  = random.randint(0, CUBE_WIDTH * (SCREEN_WIDTH-3))
+        swear_fade_ob.y = random.randint(0,CUBE_WIDTH * (SCREEN_HEIGHT-2))
 
 
 def compareShapes(b1,b2):
@@ -312,12 +306,18 @@ def reset_game():
     global side_field
     global field
     global current_level
+    global time_reward_fade_ob
+    global result_text_fade_ob
+    global swear_fade_ob
     remaining_time = PLAYTER_TIME
     display = ""
     current_level = 0
     set_settings()
     side_field.array = side_field.make_new_array()
     field.array = field.make_new_array()
+    time_reward_fade_ob = FadeInEffect(still_time=1, text_colour=ORANGE)
+    result_text_fade_ob = FadeInEffect(still_time=3)
+    swear_fade_ob = FadeInEffect(text_colour=CYAN, still_time=2)
     if not paused:
         pause_game()
 
@@ -507,7 +507,9 @@ def display_help(*args, **kwargs):
     root.protocol("WM_DELETE_WINDOW", close)
     root.resizable(False, False)
     center_tk_window(root, offset_y=-300)
+    root.bind("<Escape>", lambda x: close())
     root.mainloop()
+
 
 def goToChooseDifficulty():
     global onChooseDifficulty
@@ -643,7 +645,6 @@ pygame.mixer.pre_init()
 pygame.init()
 scr = pygame.display.set_mode((SCREEN_WIDTH*CUBE_WIDTH, SCREEN_HEIGHT*CUBE_WIDTH))
 
-
 pygame.display.set_caption(TITLE)
 scr.fill(BLACK)
 pygame.display.flip()
@@ -778,19 +779,9 @@ time_added_ani_start_time = 0
 time_added_ani_start = True
 time_added_ani_still_time = 1
 
-compare_text = False
-compare_text_start = True
-compare_text_alpha = 255
-compare_text_start_time = 0
-compare_text_still_time = 3
-
-swear = False
-swear_start = True
-swear_alpha = 255
-swear_start_time = 0
-swear_still_time = 2
-swear_x, swear_y = 0,0
-swear_text = ""
+time_reward_fade_ob = FadeInEffect(still_time=1, text_colour=ORANGE)
+result_text_fade_ob = FadeInEffect(still_time=3)
+swear_fade_ob = FadeInEffect(text_colour=CYAN, still_time=2)
 
 remaining_time = PLAYTER_TIME
 # remaining_time = 60*6 - 1
@@ -900,25 +891,19 @@ while running:
     move_ob.draw(x=side_field.w*side_field.cube_w+move_ob.GAP,y=side_field.posy)
 
     ## draw affects:
-    if time_adding:
+    if time_reward_fade_ob.on:
         reward = currentSettings['current_time_reward']
         text = "+" + str(reward)
-        fade_text('time_adding', 'time_added_ani_alpha', 'time_added_ani_start_time',
-                  'time_added_ani_start', 'time_added_ani_still_time', text,
-                  x=CUBE_WIDTH*CLOCK_POS_X, y=CUBE_WIDTH*CLOCK_POS_Y*0.3,colour=ORANGE, font=time_added_font,centeredY=True,
-                  centeredX=True)
+        time_reward_fade_ob.update(font=time_added_font,fading_speed=4, text=text, colour =ORANGE)
+        display_ob.display_sur(x=CUBE_WIDTH*CLOCK_POS_X, y=CUBE_WIDTH*CLOCK_POS_Y*0.3, sur=time_reward_fade_ob.text_sur, centeredX=True, centeredY=True)
 
-    if compare_text:
+    if result_text_fade_ob.on:
         colour = GREEN if display != 'WRONG!' else RED
-        fade_text('compare_text', 'compare_text_alpha', 'compare_text_start_time',
-                  'compare_text_start','compare_text_still_time',display,
-                  x=CUBE_WIDTH*(SCREEN_WIDTH/2),y=CUBE_WIDTH*0.5,colour=colour, centeredX=True,centeredY=True, font=compare_font)
-    if swear:
-        fade_text('swear', 'swear_alpha', 'swear_start_time',
-                  'swear_start','swear_still_time',text=swear_text,
-                  x=swear_x,y=swear_y,colour=CYAN,font=swear_font,
-                  fading_speed= 6
-                  )
+        result_text_fade_ob.update(font=compare_font, colour = colour, fading_speed=4,text=display)
+        display_ob.display_sur(x=CUBE_WIDTH*(SCREEN_WIDTH/2), y=CUBE_WIDTH*0.5, sur=result_text_fade_ob.text_sur, centeredY=True,centeredX=True)
+    if swear_fade_ob.on:
+        swear_fade_ob.update(font=swear_font, fading_speed=6)
+        display_ob.display_sur(swear_fade_ob.x, swear_fade_ob.y, sur=swear_fade_ob.text_sur, centeredX=False, centeredY=False)
         ## executing drawing & rendering:
     pygame.display.flip()
 
