@@ -34,9 +34,9 @@ CLOCK_POS_Y = 0.5
 
 # settings
 Settings = namedtuple('Settings', 'shapes_num moves_num time_reward')
-normal = Settings(shapes_num=1, moves_num=3, time_reward=20)
-easy = Settings(shapes_num=1, moves_num=2, time_reward=30)
-hard = Settings(shapes_num=2, moves_num=4, time_reward=10)
+normal = Settings(shapes_num=1, moves_num=3, time_reward=15)
+easy = Settings(shapes_num=1, moves_num=2, time_reward=20)
+hard = Settings(shapes_num=2, moves_num=4, time_reward=7)
 
 Score = namedtuple("Score", "name difficulty level time_spent time_stamp")
 
@@ -89,10 +89,10 @@ def checkBoard(*args, **kwargs):
 
     b2 = ridBorders(field)
     b1 = result_board_array
-    print('board b2')
-    print_board(b2)
-    print('board b1')
-    print_board(b1)
+    # print('board b2')
+    # print_board(b2)
+    # print('board b1')
+    # print_board(b1)
 
 
 
@@ -147,8 +147,9 @@ def makeRandomShape(settings):
         r.colour = SIDE_SHAPE_COLOUR
         r.click = True
 
-    print("side field after random():")
-    print_board(side_field.array)
+    # print("side field after random():")
+    # print_board(side_field.array)
+
     global result_board_array
     result_board_array = copy.deepcopy(side_field.array)
 
@@ -161,7 +162,6 @@ def turnRandom(settings):
         commands.append(command)
         move(command=command)
 
-    print(commands)
     return commands
 
 def chooseRandomElement(n, l, result_l):
@@ -245,7 +245,7 @@ def move(command):
     board = side_field
     shapes = []
     if command in turn_commands:
-        print('move: ', command)
+        # print('move: ', command)
         for x in range(board.w):
             for y in range(board.h):
                 cur_pos = x+y*board.w
@@ -267,7 +267,8 @@ def move(command):
     for i in shapes:
         result_board_array[i].colour = SIDE_SHAPE_COLOUR
         result_board_array[i].click = True
-    print_board(result_board_array)
+
+    # print_board(result_board_array)
 
 def print_board(board):
     global side_field
@@ -323,7 +324,8 @@ def reset_game():
 
 def user_reset_game(*args, **kwargs
                     ):
-    if confirmBox("Resetting game", "Are you sure?"):
+    if confirmBox("Resetting game", "Are you sure to reset,\nforfeit the game and\n record your scores?"):
+        finish(lose=True)
         reset_game()
 
 def confirmBox(title,content):
@@ -359,15 +361,20 @@ def finish(lose = True):
                       time_spent=total_elapse, time_stamp=datetime.now())
         record_player(root,score)
 
+    def close_win():
+        nonlocal root
+        if confirmBox("Closing Box", "Your scores won't be saved\n if you click 'OK'. Are you sure?"):
+            root.destroy()
+
     time_spent = display_ob.convert(int(total_elapse))
     root = tkinter.Tk()
     if lose:
-        root.title = "Game Over!"
+        root.title("Game Over!")
         label = tkinter.Label(root, text= f"You Lost!\nLevel: {current_level}\n"
                                           f"Total time spent: {time_spent}\nEnter your name here:")
     else:
         current_level = 5
-        root.title = "YOU WON!!"
+        root.title("YOU WON!!")
         label = tkinter.Label(root, text="You Won!\nTotal time spent:  " + display_ob.convert(
     int(total_elapse)) + "\nEnter your name here:")
     text_field = tkinter.Entry(root)
@@ -379,6 +386,8 @@ def finish(lose = True):
     button.grid(row=1, column=1)
 
     center_tk_window(root)
+
+    root.protocol("WM_DELETE_WINDOW", close_win)
     root.mainloop()
     reset_game()
 
@@ -872,7 +881,7 @@ while running:
                             colour=game_state_text_colour, font=menu_font)
     display_ob.display_text(x=CUBE_WIDTH*1.5, y=CUBE_WIDTH*7.5, text="EXIT", centeredY=True,centeredX=True, colour=WHITE ,font=menu_font)
     display_ob.display_text(x=CUBE_WIDTH*1.5, y=CUBE_WIDTH*5.5, text="HIGH SCORES", centeredY=True,centeredX=True, colour=WHITE, font=menu_font,  )
-    display_ob.display_text(x=CUBE_WIDTH*1.5, y=CUBE_WIDTH*4.5, text="RESET", centeredY=True,centeredX=True, colour=WHITE, font=menu_font)
+    display_ob.display_text(x=CUBE_WIDTH*1.5, y=CUBE_WIDTH*4.5, text="I GIVE UP!", centeredY=True,centeredX=True, colour=WHITE, font=menu_font)
     display_ob.display_text(x=CUBE_WIDTH*1.5, y=CUBE_WIDTH*6.5, text="HELP", centeredY=True,centeredX=True, colour=WHITE, font=menu_font)
     ### display the level label:
     level = 'level {}'.format(str(current_level if current_level < 4 else ""))
