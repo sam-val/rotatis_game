@@ -1,16 +1,10 @@
 from libs import Board, MyRect, Display, FadeInEffect
-import pygame
-import copy
-import random
+import pygame, copy, random, time, tkinter, pickle, os
 from collections import namedtuple
-import time
 from tkinter import messagebox as mb
-import tkinter
 from tkinter import ttk
-import pickle
 from pathlib import Path
 from datetime import datetime
-import os
 from PIL import Image, ImageTk
 
 # GLOBAL/SETTING VARIABLES:
