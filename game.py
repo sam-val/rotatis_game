@@ -845,7 +845,7 @@ while running:
     # updating the fields
     side.update()
     count_down_clock()
-    click_text = "CLICK ME TO CHECK (or ENT" \
+    click_text = "CLICK ME TO CHECK (shortcut: ENT" \
                  "ER)!"
     click_colour = WHITE
     if not paused:
