@@ -1,4 +1,4 @@
-I wanted to play around with rotation, hence this little games. It yells at you when you give a wrong answer. Mwahahaha.
+I wanted to play around with rotation, hence this little game. It swears at you when being given a wrong answer. Mwahahaha.
 
 ## How to:
 
