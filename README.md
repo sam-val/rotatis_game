@@ -14,15 +14,13 @@ pip3 install -r requirements.txt
 
 
 ## Gameplay:
-You're asked to guess the shape of the board after it is spun (randomly by the conputer). There're **5 LEVELS**.
-
+You're asked to guess the shape of the board after it is spun (randomly by the conputer). There're **5 levels**.
 
 #### The computer can move the board in four ways:
 
-![tutorial_img](images/tutorial.png)
-
+<img src="images/tutorial.png" width = 600/>
 
 ## Photos:
 
-![shot1](./screenshots/shot2.png)
+<img src="screenshots/shot2.png" width = 600/>
 
