@@ -18,9 +18,9 @@ You're asked to guess the shape of the board after it is spun (randomly by the c
 
 #### The computer can move the board in four ways:
 
-<img src="images/tutorial.png" width = 600/>
+<img src="images/tutorial.png" width = 700/>
 
 ## Gif:
 
-<img src="screenshots/shot2.png" width = 600/>
+<img src="images/preview.gif" width = 700/>
 
