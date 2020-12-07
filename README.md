@@ -20,7 +20,7 @@ You're asked to guess the shape of the board after it is spun (randomly by the c
 
 <img src="images/tutorial.png" width = 600/>
 
-## Photos:
+## Gif:
 
 <img src="screenshots/shot2.png" width = 600/>
 
