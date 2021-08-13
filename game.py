@@ -12,6 +12,7 @@ from tkinter import ttk
 from pathlib import Path
 from datetime import datetime
 from PIL import Image, ImageTk
+import sys
 
 # GLOBAL/SETTING VARIABLES:
 BOARD_W = 6
@@ -65,6 +66,12 @@ CLICK_BUTTON_COLOUR = PINK
 SIDE_SHAPE_COLOUR = ORANGE
 
 # functions:
+
+### this is for getting run-time resources in case you bundle into one file
+def resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)
+    return os.path.join(os.path.abspath("."), relative_path)
 
 
 def checkBoard(*args, **kwargs):
@@ -591,7 +598,7 @@ def display_help(*args, **kwargs):
         root.destroy()
 
     root = tkinter.Tk()
-    img = ImageTk.PhotoImage(Image.open(str(image_folder / "tutorial.png")))
+    img = ImageTk.PhotoImage(Image.open(resource_path(str(image_folder / "tutorial.png"))))
 
     label = tkinter.Label(root, image=img)
     label.pack()
@@ -797,7 +804,7 @@ class Moves:
                 )
 
     def set_image(self, move, img_str):
-        self.moves[move] = pygame.image.load(img_str).convert_alpha()
+        self.moves[move] = pygame.image.load(resource_path(img_str)).convert_alpha()
 
 
 # RUN A TK LOOP BEFORE PYGAME TO AVOID CRASHING IN SOME MAC-SYSTEMS:
@@ -927,11 +934,11 @@ result_board_array = []
 root_folder = Path().parent.resolve()
 image_folder = root_folder / "images"
 
-test_img = pygame.image.load(str(image_folder / "35x35.png")).convert_alpha()
-left_img = pygame.image.load(str(image_folder / "Left.png")).convert_alpha()
-right_img = pygame.image.load(str(image_folder / "Right.png")).convert_alpha()
-horizontal_img = pygame.image.load(str(image_folder / "Horizontal.png")).convert_alpha()
-vertical_img = pygame.image.load(str(image_folder / "Vertical.png")).convert_alpha()
+test_img = pygame.image.load(resource_path(str(image_folder / "35x35.png"))).convert_alpha()
+left_img = pygame.image.load(resource_path(str(image_folder / "Left.png"))).convert_alpha()
+right_img = pygame.image.load(resource_path(str(image_folder / "Right.png"))).convert_alpha()
+horizontal_img = pygame.image.load(resource_path(str(image_folder / "Horizontal.png"))).convert_alpha()
+vertical_img = pygame.image.load( resource_path(str(image_folder / "Vertical.png"))).convert_alpha()
 turn_commands = {
     "left": left_img,
     "right": right_img,
