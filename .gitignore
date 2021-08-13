@@ -1,5 +1,9 @@
-.idea
 testing.py
-__pycache__
+__pycache__/
 venv
 .records.pickle
+dist/
+build/
+*.spec
+.idea
+.vscode
