@@ -26,3 +26,9 @@ You're asked to guess the shape of the board after it is spun (randomly by the c
 
 <img src="images/preview.gif" width = 700/>
 
+### For packaging for your OS:
+
+```
+pyinstaller -D game.py -n rotatis --distpath {your distpath} --add-data images:./images --add-data screenshots:screenshots --add-data text:text --collect-submodules PIL
+
+```
