@@ -232,6 +232,8 @@ def exit_game(*args, **kwargs):
     global running
     if confirmBox("Quitting game", "Are you sure, dear?"):
         running = False
+        return True
+    return False
 
 
 def pause_game(*args, **kwargs):
@@ -677,6 +679,8 @@ def goToChooseDifficulty():
             if e.type == pygame.QUIT:
                 if exit_game():
                     running = False
+                    break
+                
             if e.type == pygame.MOUSEBUTTONDOWN:
                 easy_button.click(e.pos)
                 normal_button.click(e.pos)
@@ -724,7 +728,6 @@ def goToChooseDifficulty():
         pygame.display.flip()
 
     del easy_button, normal_button, hard_button
-    onChooseDifficulty = False
     return diff
 
 
@@ -961,10 +964,8 @@ display_ob = MyDisplay(surface=scr, font=font, colour=font_colour)
 move_ob = Moves(None, img_width=test_img.get_width())
 
 # PROGRAM STARTS, GO TO FIRST SCREEN:
-onChooseDifficulty = True
 difficulty = goToChooseDifficulty()
 
-# current stuff
 current_level = 0
 if difficulty is not None:
     currentSettings = {
